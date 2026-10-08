@@ -1,0 +1,22 @@
+:root {
+  /* 鹅疫智答深绿色主题 */
+  --color-primary: #2e7d32;
+  --color-primary-light: #4caf50;
+  --color-primary-dark: #1b5e20;
+  /* 风险等级配色：低=绿 / 中=橙 / 高=红 */
+  --risk-low: #4caf50;
+  --risk-medium: #ff9800;
+  --risk-high: #f44336;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'PingFang SC',
+    'Hiragino Sans GB', 'Microsoft YaHei', sans-serif;
+  background: #f5f7f5;
+  color: #1a1a1a;
+}

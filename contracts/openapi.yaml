@@ -1,0 +1,151 @@
+openapi: 3.1.0
+info:
+  title: 鹅疫智答 - 风险研判平台 API
+  version: 0.1.0
+  description: |
+    行为事件驱动的 Agentic-RAG 多智能体风险研判平台后端接口。
+    契约先行：本文件由 FastAPI 自动生成，作为前后端联调的唯一事实源。
+servers:
+  - url: http://localhost:8000/api/v1
+    description: 本地开发
+paths:
+  /vision/events:
+    post:
+      tags: [vision]
+      summary: 上报行为事件
+      description: 感知域（视觉/模拟器）通过此接口上报符合 behavior-event.schema.json 的事件。
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/BehaviorEvent'
+      responses:
+        '201':
+          description: 事件已接收并落库
+  /vision/simulate:
+    post:
+      tags: [vision]
+      summary: 手动生成模拟事件
+      description: 前端事件模拟控制台调用，支持按行为类型/数量/时长生成事件，或播放预设演示剧本。
+      responses:
+        '201':
+          description: 模拟事件已生成
+  /vision/health:
+    get:
+      tags: [vision]
+      summary: 视觉 Provider 状态
+      responses:
+        '200':
+          description: 返回当前 mode、fps、最后事件时间
+  /chat/stream:
+    post:
+      tags: [chat]
+      summary: 智能问答 / 生成研判报告（SSE 流式）
+      description: |
+        mode=qa：普通问答；
+        mode=report&event_id=xxx：针对指定事件生成研判报告。
+        响应为 SSE 流，事件类型：meta / delta / citation / done / error。
+      responses:
+        '200':
+          description: SSE 流式响应
+          content:
+            text/event-stream:
+              schema:
+                type: string
+  /alarms:
+    get:
+      tags: [alarms]
+      summary: 告警分页查询
+      parameters:
+        - in: query
+          name: risk_level
+          schema: { type: string, enum: [low, medium, high] }
+        - in: query
+          name: camera_id
+          schema: { type: string }
+        - in: query
+          name: start
+          schema: { type: string, format: date-time }
+        - in: query
+          name: end
+          schema: { type: string, format: date-time }
+        - in: query
+          name: page
+          schema: { type: integer, default: 1 }
+        - in: query
+          name: page_size
+          schema: { type: integer, default: 20 }
+      responses:
+        '200':
+          description: 告警列表
+  /alarms/{alarm_id}:
+    get:
+      tags: [alarms]
+      summary: 告警详情
+      parameters:
+        - in: path
+          name: alarm_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 告警详情（含完整报告与引用）
+  /alarms/{alarm_id}/feedback:
+    post:
+      tags: [alarms]
+      summary: 报告反馈
+      parameters:
+        - in: path
+          name: alarm_id
+          required: true
+          schema: { type: string }
+      responses:
+        '200':
+          description: 反馈已记录
+  /kb/documents:
+    post:
+      tags: [kb]
+      summary: 上传知识库文档
+      description: 上传 PDF/DOCX，触发异步解析入库。
+      responses:
+        '202':
+          description: 文档已接收，异步处理中
+    get:
+      tags: [kb]
+      summary: 知识库文档列表
+      responses:
+        '200':
+          description: 文档列表与处理状态
+  /kb/documents/{doc_id}:
+    delete:
+      tags: [kb]
+      summary: 删除文档及其向量
+      parameters:
+        - in: path
+          name: doc_id
+          required: true
+          schema: { type: string }
+      responses:
+        '204':
+          description: 已删除
+  /stats/overview:
+    get:
+      tags: [stats]
+      summary: 看板统计
+      responses:
+        '200':
+          description: 今日事件数、告警数、等级分布、趋势
+  /meta/contracts/behavior-event.json:
+    get:
+      tags: [meta]
+      summary: 行为事件契约
+      responses:
+        '200':
+          description: behavior-event.schema.json 内容
+components:
+  schemas:
+    BehaviorEvent:
+      $ref: './behavior-event.schema.json'
+    RiskReport:
+      $ref: './risk-report.schema.json'

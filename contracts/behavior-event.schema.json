@@ -1,0 +1,139 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "behavior-event.schema.json",
+  "title": "BehaviorEvent",
+  "description": "行为事件契约——感知域（视觉/模拟器）与研判域之间的唯一数据格式。只要本契约不变，source 从 simulator 切换为 yolo 时，前后端零改动。",
+  "type": "object",
+  "required": ["schema_version", "event_id", "source", "timestamp", "camera_id", "abnormal"],
+  "additionalProperties": false,
+  "properties": {
+    "schema_version": {
+      "const": "1.0",
+      "description": "契约版本号，破坏性变更必须升级并同步 review"
+    },
+    "event_id": {
+      "type": "string",
+      "description": "事件唯一 ID，建议格式 evt_YYYYMMDDTHHmmss_camId_behavior",
+      "examples": ["evt_20261008T153000_cam001_limp"]
+    },
+    "source": {
+      "type": "string",
+      "enum": ["simulator", "replay", "yolo", "manual"],
+      "description": "事件来源：simulator=事件模拟器、replay=预生成视频回放、yolo=真实视觉推理、manual=人工录入"
+    },
+    "timestamp": {
+      "type": "string",
+      "format": "date-time",
+      "description": "事件发生的 ISO-8601 时间戳（含时区）"
+    },
+    "camera_id": {
+      "type": "string",
+      "description": "摄像头/画面唯一标识"
+    },
+    "scene": {
+      "type": "object",
+      "description": "场景上下文",
+      "additionalProperties": false,
+      "properties": {
+        "species": {
+          "type": "string",
+          "enum": ["goose", "duck", "chicken"],
+          "description": "物种，一期默认 goose"
+        },
+        "house_id": {
+          "type": "string",
+          "description": "圈舍编号"
+        },
+        "age_days": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "日龄"
+        },
+        "head_count": {
+          "type": "integer",
+          "minimum": 0,
+          "description": "画面内总只数"
+        }
+      }
+    },
+    "abnormal": {
+      "type": "array",
+      "description": "检测到的异常行为列表",
+      "items": {
+        "type": "object",
+        "required": ["behavior", "count"],
+        "additionalProperties": false,
+        "properties": {
+          "behavior": {
+            "type": "string",
+            "enum": ["limp", "gather", "isolate"],
+            "description": "异常行为类型：limp=跛行、gather=扎堆、isolate=离群"
+          },
+          "count": {
+            "type": "integer",
+            "minimum": 1,
+            "description": "异常个体数量"
+          },
+          "duration_sec": {
+            "type": "number",
+            "minimum": 0,
+            "description": "异常持续时长（秒）"
+          },
+          "confidence": {
+            "type": "number",
+            "minimum": 0,
+            "maximum": 1,
+            "description": "检测置信度"
+          },
+          "track_ids": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "description": "涉及的跟踪 ID 列表"
+          },
+          "bbox": {
+            "type": "array",
+            "description": "边界框列表 [[x1,y1,x2,y2], ...]",
+            "items": {
+              "type": "array",
+              "items": { "type": "number" }
+            }
+          }
+        }
+      }
+    },
+    "normal_stat": {
+      "type": "object",
+      "description": "正常行为统计",
+      "additionalProperties": true,
+      "properties": {
+        "total": { "type": "integer", "minimum": 0 },
+        "eat": { "type": "integer", "minimum": 0 },
+        "drink": { "type": "integer", "minimum": 0 },
+        "lie": { "type": "integer", "minimum": 0 },
+        "stand": { "type": "integer", "minimum": 0 },
+        "walk": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "trigger": {
+      "type": "object",
+      "description": "触发规则与去抖结果",
+      "additionalProperties": false,
+      "properties": {
+        "rule": {
+          "type": "string",
+          "description": "命中的规则表达式"
+        },
+        "passed": {
+          "type": "boolean",
+          "description": "是否通过阈值校验（true 才会触发告警研判）"
+        },
+        "severity_score": {
+          "type": "number",
+          "minimum": 0,
+          "maximum": 1,
+          "description": "严重度评分，0-1"
+        }
+      }
+    }
+  }
+}

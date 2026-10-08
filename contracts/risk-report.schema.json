@@ -1,0 +1,91 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "risk-report.schema.json",
+  "title": "RiskReport",
+  "description": "研判报告契约——LangGraph 多智能体对行为事件进行研判后的结构化输出，落库到 alarm_record 表并推送给前端。",
+  "type": "object",
+  "required": ["alarm_id", "risk_level", "risk_score", "title", "phenomenon", "causes", "actions", "citations", "disclaimer"],
+  "additionalProperties": false,
+  "properties": {
+    "alarm_id": {
+      "type": "string",
+      "description": "告警唯一 ID",
+      "examples": ["alm_20261008_153012"]
+    },
+    "event_id": {
+      "type": "string",
+      "description": "关联的行为事件 ID"
+    },
+    "risk_level": {
+      "type": "string",
+      "enum": ["low", "medium", "high"],
+      "description": "风险等级：low=低(绿)、medium=中(橙)、high=高(红)"
+    },
+    "risk_score": {
+      "type": "number",
+      "minimum": 0,
+      "maximum": 1,
+      "description": "风险评分 0-1"
+    },
+    "title": {
+      "type": "string",
+      "description": "报告标题，一句话概括风险"
+    },
+    "phenomenon": {
+      "type": "string",
+      "description": "现象描述：把事件数据翻译成自然语言"
+    },
+    "causes": {
+      "type": "array",
+      "description": "可能诱因列表",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "citations": {
+            "type": "array",
+            "items": { "type": "integer" },
+            "description": "引用编号，对应 citations 数组的 idx"
+          }
+        }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "description": "处置建议列表",
+      "items": {
+        "type": "object",
+        "required": ["text"],
+        "properties": {
+          "text": { "type": "string" },
+          "citations": {
+            "type": "array",
+            "items": { "type": "integer" }
+          }
+        }
+      }
+    },
+    "citations": {
+      "type": "array",
+      "description": "引用来源列表，前端可展开查看原文片段",
+      "items": {
+        "type": "object",
+        "required": ["idx", "title"],
+        "properties": {
+          "idx": { "type": "integer", "description": "引用编号" },
+          "title": { "type": "string", "description": "教材/标准名称" },
+          "chapter": { "type": "string", "description": "章节" },
+          "page": { "type": "integer", "description": "页码" },
+          "standard": { "type": "string", "description": "标准号（如 NY/T XXXX）" },
+          "section": { "type": "string", "description": "标准条款" }
+        }
+      }
+    },
+    "disclaimer": {
+      "type": "string",
+      "description": "免责声明",
+      "default": "本报告由 AI 依据知识库生成，仅供参考，不构成兽医诊疗建议。"
+    }
+  }
+}
